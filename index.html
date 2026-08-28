@@ -404,7 +404,7 @@ body{
 
 <script>
 const SITE_SETTINGS_MARKER = "__AANTI_SITE_SETTINGS__";
-const SITE_SETTINGS_ID = "aanti-site-settings";
+const SITE_SETTINGS_ID = "00000000-0000-4000-8000-000000000001";
 const DEFAULT_SITE_TITLE = "بلوزات أنثوية";
 const DEFAULT_SITE_DESCRIPTION = "قماش ناعم، أكمام واسعة، وربطة أمامية — إطلالة يومية مريحة وأنيقة.";
 
@@ -563,7 +563,6 @@ async function saveGlobalSiteSettings(){
     const rows=await existingResponse.json();
 
     const body={
-      id:SITE_SETTINGS_ID,
       name:SITE_SETTINGS_MARKER,
       color:title,
       description:description,
@@ -583,7 +582,7 @@ async function saveGlobalSiteSettings(){
       r=await fetch(TABLE_URL,{
         method:"POST",
         headers:{...apiHeaders(),"Prefer":"return=representation"},
-        body:JSON.stringify(body)
+        body:JSON.stringify({...body,id:SITE_SETTINGS_ID})
       });
     }
     if(!r.ok) throw new Error(await r.text());
