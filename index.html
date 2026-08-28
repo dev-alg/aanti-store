@@ -379,7 +379,7 @@ body{
 
       <div class="admin-form admin-site-settings" id="siteSettingsEditor" hidden>
         <div class="admin-list-title"><strong>تعديل عنوان ووصف الموقع</strong><button class="admin-secondary" type="button" id="closeSiteSettings">إغلاق</button></div>
-        <p class="admin-muted">هذا العنصر ثابت في أعلى قائمة الإدارة، وتعديله يغيّر المحتوى الظاهر للجميع.</p>
+        <p class="admin-muted">هذا العنصر ثابت في أعلى القائمة ويُحفظ كعنصر خاص داخل قاعدة بيانات المنتجات، لذلك يبقى التعديل بعد Refresh ويظهر لجميع الزوار.</p>
         <label>عنوان الموقع</label>
         <input id="siteTitle" required>
         <label>وصف الموقع</label>
@@ -485,7 +485,8 @@ async function loadProducts(){
     const r=await fetch(TABLE_URL+"?select=*&active=eq.true&order=created_at.desc",{headers:apiHeaders("")});
     if(!r.ok) throw new Error(await r.text());
     const rows=await r.json();
-    if(rows.length) PRODUCTS=rows.map(normalizeProduct);
+    const productRows=rows.filter(row=>row.name!==SITE_SETTINGS_MARKER);
+    if(productRows.length) PRODUCTS=productRows.map(normalizeProduct);
   }catch(e){ console.warn("Supabase products unavailable; using local products",e); }
   render();
 }
@@ -537,7 +538,7 @@ function applySiteSettings(settings){
 
 async function loadSiteSettings(){
   try{
-    const r=await fetch(TABLE_URL+"?select=id,name,color,description&name=eq."+encodeURIComponent(SITE_SETTINGS_MARKER)+"&limit=1",{headers:apiHeaders("")});
+    const r=await fetch(TABLE_URL+"?select=id,name,color,description&name=eq."+encodeURIComponent(SITE_SETTINGS_MARKER)+"&active=eq.true&limit=1",{headers:apiHeaders("")});
     if(!r.ok) throw new Error(await r.text());
     const rows=await r.json();
     if(rows.length){
@@ -559,7 +560,7 @@ async function saveGlobalSiteSettings(){
     const description=siteDescription.value.trim();
     if(!title||!description) throw new Error("أدخل العنوان والوصف.");
 
-    const q=TABLE_URL+"?name=eq."+encodeURIComponent(SITE_SETTINGS_MARKER)+"&limit=1";
+    const q=TABLE_URL+"?select=id,name,color,description,active&name=eq."+encodeURIComponent(SITE_SETTINGS_MARKER)+"&limit=1";
     const existingResponse=await fetch(q,{headers:apiHeaders()});
     if(!existingResponse.ok) throw new Error(await existingResponse.text());
     const rows=await existingResponse.json();
@@ -570,7 +571,7 @@ async function saveGlobalSiteSettings(){
       description:description,
       price:0,
       image_paths:[],
-      active:false
+      active:true
     };
 
     let r;
@@ -591,6 +592,7 @@ async function saveGlobalSiteSettings(){
 
     applySiteSettings({title,description});
     siteSettingsEditor.hidden=true;
+    await loadSiteSettings();
     await refreshAdminList();
     siteSettingsError.style.color="#8ff0b0";
     siteSettingsError.textContent="تم الحفظ بنجاح. سيظهر التعديل للجميع بعد تحديث الصفحة.";
