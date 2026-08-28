@@ -404,6 +404,7 @@ body{
 
 <script>
 const SITE_SETTINGS_MARKER = "__AANTI_SITE_SETTINGS__";
+const SITE_SETTINGS_ID = "aanti-site-settings";
 const DEFAULT_SITE_TITLE = "بلوزات أنثوية";
 const DEFAULT_SITE_DESCRIPTION = "قماش ناعم، أكمام واسعة، وربطة أمامية — إطلالة يومية مريحة وأنيقة.";
 
@@ -522,7 +523,7 @@ function escapeHtml(value){
   return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
 function applySiteSettings(settings){
-  const title=(settings?.color||DEFAULT_SITE_TITLE).trim()||DEFAULT_SITE_TITLE;
+  const title=(settings?.title||settings?.color||DEFAULT_SITE_TITLE).trim()||DEFAULT_SITE_TITLE;
   const description=(settings?.description||DEFAULT_SITE_DESCRIPTION).trim()||DEFAULT_SITE_DESCRIPTION;
   siteHeroTitle.textContent=title;
   siteHeroDescription.textContent=description;
@@ -531,17 +532,22 @@ function applySiteSettings(settings){
   siteTitle.value=title;
   siteDescription.value=description;
 }
+
 async function loadSiteSettings(){
   try{
     const r=await fetch(TABLE_URL+"?select=id,name,color,description&name=eq."+encodeURIComponent(SITE_SETTINGS_MARKER)+"&limit=1",{headers:apiHeaders("")});
     if(!r.ok) throw new Error(await r.text());
     const rows=await r.json();
-    if(rows.length) applySiteSettings(rows[0]);
-    else applySiteSettings(null);
+    if(rows.length){
+      applySiteSettings({title:rows[0].color,description:rows[0].description});
+    }else{
+      applySiteSettings(null);
+    }
   }catch(e){
     applySiteSettings(null);
   }
 }
+
 async function saveGlobalSiteSettings(){
   siteSettingsError.textContent="";
   saveSiteSettings.disabled=true;
@@ -550,25 +556,41 @@ async function saveGlobalSiteSettings(){
     const title=siteTitle.value.trim();
     const description=siteDescription.value.trim();
     if(!title||!description) throw new Error("أدخل العنوان والوصف.");
-    const q=TABLE_URL+"?select=id,name,color,description&name=eq."+encodeURIComponent(SITE_SETTINGS_MARKER)+"&limit=1";
+
+    const q=TABLE_URL+"?name=eq."+encodeURIComponent(SITE_SETTINGS_MARKER)+"&limit=1";
     const existingResponse=await fetch(q,{headers:apiHeaders()});
     if(!existingResponse.ok) throw new Error(await existingResponse.text());
     const rows=await existingResponse.json();
-    const body={name:SITE_SETTINGS_MARKER,color:title,description,price:0,image_paths:[],active:false};
+
+    const body={
+      id:SITE_SETTINGS_ID,
+      name:SITE_SETTINGS_MARKER,
+      color:title,
+      description:description,
+      price:0,
+      image_paths:[],
+      active:false
+    };
+
     let r;
     if(rows.length){
       r=await fetch(TABLE_URL+"?id=eq."+encodeURIComponent(rows[0].id),{
-        method:"PATCH",headers:{...apiHeaders(),"Prefer":"return=minimal"},body:JSON.stringify(body)
+        method:"PATCH",
+        headers:{...apiHeaders(),"Prefer":"return=representation"},
+        body:JSON.stringify(body)
       });
     }else{
       r=await fetch(TABLE_URL,{
-        method:"POST",headers:{...apiHeaders(),"Prefer":"return=minimal"},body:JSON.stringify(body)
+        method:"POST",
+        headers:{...apiHeaders(),"Prefer":"return=representation"},
+        body:JSON.stringify(body)
       });
     }
     if(!r.ok) throw new Error(await r.text());
-    applySiteSettings({color:title,description});
+
+    applySiteSettings({title,description});
     siteSettingsError.style.color="#8ff0b0";
-    siteSettingsError.textContent="تم الحفظ وسيظهر التعديل للجميع.";
+    siteSettingsError.textContent="تم الحفظ بنجاح. سيظهر التعديل للجميع بعد تحديث الصفحة.";
   }catch(e){
     siteSettingsError.style.color="";
     siteSettingsError.textContent="تعذر الحفظ: "+e.message;
