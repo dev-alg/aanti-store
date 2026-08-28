@@ -303,6 +303,8 @@ body{
   }
 }
 
+
+.admin-btn{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:12px;padding:9px 13px;font-weight:700;cursor:pointer}.admin-modal{position:fixed;inset:0;z-index:10000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.68);padding:16px}.admin-modal.open{display:flex}.admin-box{position:relative;width:min(760px,100%);max-height:92vh;overflow:auto;background:#111;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:22px;padding:26px;box-shadow:0 24px 80px rgba(0,0,0,.5)}.admin-box h2{margin:0 0 8px}.admin-muted{opacity:.68;font-size:.9rem}.admin-box label{display:block;margin:14px 0 7px;font-weight:700}.admin-box input,.admin-box textarea{width:100%;box-sizing:border-box;background:#1b1b1b;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:11px;padding:11px;font:inherit}.admin-box textarea{min-height:80px;resize:vertical}.admin-form{margin-top:14px}.admin-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.admin-logout,.admin-secondary{border:1px solid rgba(255,255,255,.16);background:#222;color:#fff;border-radius:11px;padding:10px 14px;cursor:pointer}.admin-actions{display:flex;gap:10px;margin-top:16px}.admin-actions .modal-submit{flex:1}.admin-error{color:#ff8e9d;margin-top:10px;min-height:20px}.admin-list{margin-top:26px;display:grid;gap:10px}.admin-item{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid rgba(255,255,255,.1);border-radius:14px;background:#171717}.admin-item img{width:58px;height:58px;object-fit:cover;border-radius:10px}.admin-item-main{flex:1;min-width:0}.admin-item-main strong{display:block}.admin-item-main span{opacity:.65;font-size:.85rem}.admin-item-actions{display:flex;gap:7px}.admin-item-actions button{border:0;border-radius:9px;padding:8px 10px;cursor:pointer}.admin-edit{background:#eee}.admin-delete{background:#5d1f27;color:#fff}.current-images{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.current-images img{width:70px;height:70px;object-fit:cover;border-radius:10px;border:1px solid rgba(255,255,255,.12)}@media(max-width:600px){.nav{gap:8px}.admin-btn{font-size:12px;padding:8px}.admin-box{padding:20px}.admin-item{align-items:flex-start}.admin-item-actions{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -312,6 +314,7 @@ body{
   <a class="nav-ig" href="https://www.instagram.com/aanti_.store?igsi=Z2tzY2Zmc3Y4Ymdh" target="_blank" rel="noopener">
     @aanti_.store
   </a>
+<button class="admin-btn" id="adminOpen" type="button">إدارة المنتجات</button>
 </nav>
 
 <header class="hero">
@@ -341,7 +344,7 @@ body{
     <div class="sel" id="selName">—</div>
     <form action="https://formspree.io/f/xljeeavy" method="POST">
       <input type="hidden" name="المنتج" id="selInput">
-      <input type="hidden" name="السعر" value="3000 دج">
+      <input type="hidden" name="السعر" id="selPriceInput" value="3000 دج">
       <label for="n">الاسم</label>
       <input id="n" name="الاسم" required>
       <label for="p">رقم الهاتف</label>
@@ -350,8 +353,37 @@ body{
       <input id="c" name="الولاية / المدينة" required>
       <label for="m">ملاحظة (المقاس…)</label>
       <textarea id="m" name="ملاحظة" placeholder="المقاس أو أي تفاصيل"></textarea>
-      <button class="modal-submit" type="submit">تأكيد الطلب — 3000 دج</button>
+      <button class="modal-submit" id="orderSubmit" type="submit">تأكيد الطلب — 3000 دج</button>
     </form>
+  </div>
+</div>
+
+<div class="admin-modal" id="adminModal" aria-hidden="true">
+  <div class="admin-box">
+    <button class="modal-x" id="adminX" type="button" aria-label="إغلاق">×</button>
+    <div id="adminLoginView">
+      <h2>إدارة المنتجات</h2>
+      <p class="admin-muted">سجّل الدخول لإضافة وتعديل وحذف المنتجات.</p>
+      <label>البريد الإلكتروني</label><input id="adminEmail" type="email" autocomplete="username">
+      <label>كلمة المرور</label><input id="adminPassword" type="password" autocomplete="current-password">
+      <button class="modal-submit" id="adminLogin" type="button">دخول</button>
+      <div class="admin-error" id="adminLoginError"></div>
+    </div>
+    <div id="adminPanelView" hidden>
+      <div class="admin-head"><div><h2>إدارة المنتجات</h2><p class="admin-muted">كل تعديل يظهر للزبائن من أجهزتهم.</p></div><button class="admin-logout" id="adminLogout" type="button">خروج</button></div>
+      <form id="productForm" class="admin-form">
+        <input type="hidden" id="editId">
+        <label>اسم المنتج</label><input id="productName" required>
+        <label>اللون</label><input id="productColor" placeholder="مثال: أسود">
+        <label>الوصف</label><textarea id="productDesc" required></textarea>
+        <label>السعر (دج)</label><input id="productPrice" type="number" min="0" step="1" required>
+        <label>الصور <span class="admin-muted">(يمكن اختيار عدة صور)</span></label><input id="productImages" type="file" accept="image/*" multiple>
+        <div id="currentImages" class="current-images"></div>
+        <div class="admin-actions"><button class="modal-submit" type="submit" id="saveProduct">إضافة المنتج</button><button class="admin-secondary" type="button" id="cancelEdit">مسح</button></div>
+        <div class="admin-error" id="productError"></div>
+      </form>
+      <div class="admin-list" id="adminList"></div>
+    </div>
   </div>
 </div>
 
@@ -364,7 +396,7 @@ body{
 </footer>
 
 <script>
-const PRODUCTS = [
+let PRODUCTS = [
   {
     id: "white",
     name: "بلوزة بيضاء",
@@ -417,130 +449,130 @@ const modal = document.getElementById("modal");
 const modalX = document.getElementById("modalX");
 const selName = document.getElementById("selName");
 const selInput = document.getElementById("selInput");
+const selPriceInput = document.getElementById("selPriceInput");
+const orderSubmit = document.getElementById("orderSubmit");
 
-const state = PRODUCTS.map(() => 0); // current image index per product
+const SUPABASE_URL = "https://dnkynubidlgngfufzfpr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_NrENbusHUhH0bXC2z3fKwQ_IBE5SrBN";
+const TABLE_URL = SUPABASE_URL + "/rest/v1/products";
+const BUCKET = "product-images";
+let accessToken = sessionStorage.getItem("aanti_admin_token") || "";
+const state = [];
 
-function render() {
-  grid.innerHTML = "";
-  PRODUCTS.forEach((prod, pi) => {
-    const card = document.createElement("article");
-    card.className = "product";
+function apiHeaders(token=accessToken){
+  const h={"apikey":SUPABASE_KEY,"Content-Type":"application/json"};
+  if(token) h.Authorization="Bearer "+token;
+  return h;
+}
+function imageUrl(path){ return SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + path; }
+function normalizeProduct(p){
+  return {id:p.id,name:p.name,color:p.color||"",desc:p.description||"",price:(Number(p.price)||0)+" دج",images:(p.image_paths||[]).map(imageUrl)};
+}
+async function loadProducts(){
+  try{
+    const r=await fetch(TABLE_URL+"?select=*&active=eq.true&order=created_at.desc",{headers:apiHeaders("")});
+    if(!r.ok) throw new Error(await r.text());
+    const rows=await r.json();
+    if(rows.length) PRODUCTS=rows.map(normalizeProduct);
+  }catch(e){ console.warn("Supabase products unavailable; using local products",e); }
+  render();
+}
 
-    const many = prod.images.length > 1;
-    const pips = many
-      ? `<div class="pips">${prod.images.map((_, i) =>
-          `<span class="pip ${i === state[pi] ? "on" : ""}"></span>`
-        ).join("")}</div>`
-      : "";
-
-    const imgs = prod.images.map((src, i) =>
-      `<img src="${src}" alt="${prod.name}" class="${i === state[pi] ? "on" : ""}" draggable="false">`
-    ).join("");
-
-    card.innerHTML = `
-      <div class="img-box ${many ? "has-many" : ""}" data-pi="${pi}">
-        ${imgs}
-        ${pips}
-        <span class="color-chip">${prod.color}</span>
-        ${many ? '<span class="img-hint">اضغطي للتبديل</span>' : ""}
-      </div>
-      <div class="info">
-        <h3>${prod.name}</h3>
-        <div class="desc">${prod.desc}</div>
-        <div class="row">
-          <span class="price">${prod.price}</span>
-          <button class="buy" type="button" data-pi="${pi}">اطلبي</button>
-        </div>
-      </div>
-    `;
-
-    // click image → next photo
-    const box = card.querySelector(".img-box");
-    box.addEventListener("click", (e) => {
-      if (!many) return;
-      state[pi] = (state[pi] + 1) % prod.images.length;
-      const all = box.querySelectorAll("img");
-      const allPips = box.querySelectorAll(".pip");
-      all.forEach((img, i) => img.classList.toggle("on", i === state[pi]));
-      allPips.forEach((p, i) => p.classList.toggle("on", i === state[pi]));
-    });
-
-    // order button
-    card.querySelector(".buy").addEventListener("click", (e) => {
-      e.stopPropagation();
-      const label = `${prod.name} — ${prod.price}`;
-      selName.textContent = label;
-      selInput.value = label;
-      modal.classList.add("open");
-      modal.setAttribute("aria-hidden", "false");
-    });
-
-    // particles layer
-    const parts = document.createElement("div");
-    parts.className = "particles";
-    const n = 10 + Math.floor(Math.random() * 6);
-    for (let k = 0; k < n; k++) {
-      const p = document.createElement("i");
-      p.className = "particle";
-      const sz = (3 + Math.random() * 5).toFixed(1) + "px";
-      const dur = (2.8 + Math.random() * 2.4).toFixed(2) + "s";
-      const del = (-Math.random() * 5).toFixed(2) + "s";
-      const lx = (8 + Math.random() * 84).toFixed(1) + "%";
-      const dx = (-30 + Math.random() * 60).toFixed(0) + "px";
-      p.style.setProperty("--sz", sz);
-      p.style.setProperty("--dur", dur);
-      p.style.setProperty("--del", del);
-      p.style.setProperty("--lx", lx);
-      p.style.setProperty("--dx", dx);
-      parts.appendChild(p);
-    }
-    card.style.position = "relative";
-    card.appendChild(parts);
-
-    grid.appendChild(card);
+function render(){
+  grid.innerHTML="";
+  state.length=PRODUCTS.length; state.fill(0);
+  PRODUCTS.forEach((prod,pi)=>{
+    const card=document.createElement("article"); card.className="product";
+    const many=prod.images.length>1;
+    const pips=many?`<div class="pips">${prod.images.map((_,i)=>`<span class="pip ${i===state[pi]?"on":""}"></span>`).join("")}</div>`:"";
+    const imgs=prod.images.map((src,i)=>`<img src="${src}" alt="${prod.name}" class="${i===state[pi]?"on":""}" draggable="false">`).join("");
+    card.innerHTML=`<div class="img-box ${many?"has-many":""}" data-pi="${pi}">${imgs}${pips}<span class="color-chip">${prod.color}</span>${many?'<span class="img-hint">اضغطي للتبديل</span>':""}</div><div class="info"><h3>${prod.name}</h3><div class="desc">${prod.desc}</div><div class="row"><span class="price">${prod.price}</span><button class="buy" type="button" data-pi="${pi}">اطلبي</button></div></div>`;
+    const box=card.querySelector(".img-box");
+    box.addEventListener("click",e=>{if(!many)return;state[pi]=(state[pi]+1)%prod.images.length;box.querySelectorAll("img").forEach((img,i)=>img.classList.toggle("on",i===state[pi]));box.querySelectorAll(".pip").forEach((p,i)=>p.classList.toggle("on",i===state[pi]));});
+    card.querySelector(".buy").addEventListener("click",e=>{e.stopPropagation();const label=`${prod.name} — ${prod.price}`;selName.textContent=label;selInput.value=label;selPriceInput.value=prod.price;orderSubmit.textContent=`تأكيد الطلب — ${prod.price}`;modal.classList.add("open");modal.setAttribute("aria-hidden","false");});
+    const parts=document.createElement("div");parts.className="particles";for(let k=0;k<10+Math.floor(Math.random()*6);k++){const p=document.createElement("i");p.className="particle";p.style.setProperty("--sz",(3+Math.random()*5).toFixed(1)+"px");p.style.setProperty("--dur",(2.8+Math.random()*2.4).toFixed(2)+"s");p.style.setProperty("--del",(-Math.random()*5).toFixed(2)+"s");p.style.setProperty("--lx",(8+Math.random()*84).toFixed(1)+"%");p.style.setProperty("--dx",(-30+Math.random()*60).toFixed(0)+"px");parts.appendChild(p);}card.style.position="relative";card.appendChild(parts);grid.appendChild(card);
   });
 }
 
-render();
+modalX.addEventListener("click",()=>{modal.classList.remove("open");modal.setAttribute("aria-hidden","true")});
+modal.addEventListener("click",e=>{if(e.target===modal)modalX.click()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&modal.classList.contains("open"))modalX.click()});
 
-modalX.addEventListener("click", () => {
-  modal.classList.remove("open");
-  modal.setAttribute("aria-hidden", "true");
+// Admin panel
+const adminModal=document.getElementById("adminModal"), adminOpen=document.getElementById("adminOpen"), adminX=document.getElementById("adminX");
+const loginView=document.getElementById("adminLoginView"), panelView=document.getElementById("adminPanelView");
+const adminEmail=document.getElementById("adminEmail"), adminPassword=document.getElementById("adminPassword"), loginError=document.getElementById("adminLoginError");
+const adminList=document.getElementById("adminList"), productForm=document.getElementById("productForm"), productError=document.getElementById("productError");
+const editId=document.getElementById("editId"), productName=document.getElementById("productName"), productColor=document.getElementById("productColor"), productDesc=document.getElementById("productDesc"), productPrice=document.getElementById("productPrice"), productImages=document.getElementById("productImages"), currentImages=document.getElementById("currentImages"), saveProduct=document.getElementById("saveProduct");
+let adminRows=[];
+function openAdmin(){adminModal.classList.add("open");adminModal.setAttribute("aria-hidden","false");if(accessToken){loginView.hidden=true;panelView.hidden=false;refreshAdminList();}else{loginView.hidden=false;panelView.hidden=true;}}
+adminOpen.addEventListener("click",openAdmin); adminX.addEventListener("click",()=>{adminModal.classList.remove("open");adminModal.setAttribute("aria-hidden","true")});
+adminModal.addEventListener("click",e=>{if(e.target===adminModal)adminX.click()});
+
+document.getElementById("adminLogin").addEventListener("click",async()=>{
+  loginError.textContent="";
+  try{
+    const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:apiHeaders(""),body:JSON.stringify({email:adminEmail.value.trim(),password:adminPassword.value})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error_description||d.msg||"تعذر تسجيل الدخول");
+    accessToken=d.access_token; sessionStorage.setItem("aanti_admin_token",accessToken); loginView.hidden=true;panelView.hidden=false;refreshAdminList();
+  }catch(e){loginError.textContent=e.message;}
 });
-modal.addEventListener("click", (e) => {
-  if (e.target === modal) modalX.click();
-});
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && modal.classList.contains("open")) modalX.click();
-});
+document.getElementById("adminLogout").addEventListener("click",()=>{accessToken="";sessionStorage.removeItem("aanti_admin_token");loginView.hidden=false;panelView.hidden=true});
+
+document.getElementById("cancelEdit").addEventListener("click",resetProductForm);
+function resetProductForm(){editId.value="";productName.value="";productColor.value="";productDesc.value="";productPrice.value="";productImages.value="";currentImages.innerHTML="";saveProduct.textContent="إضافة المنتج";productError.textContent="";}
+function showCurrentImages(paths){currentImages.innerHTML="";(paths||[]).forEach(p=>{const img=document.createElement("img");img.src=imageUrl(p);currentImages.appendChild(img)});}
+async function refreshAdminList(){
+  try{const r=await fetch(TABLE_URL+"?select=*&order=created_at.desc",{headers:apiHeaders()});if(!r.ok)throw new Error(await r.text());adminRows=await r.json();adminList.innerHTML="";adminRows.forEach(row=>{const item=document.createElement("div");item.className="admin-item";const first=(row.image_paths||[])[0];item.innerHTML=`${first?`<img src="${imageUrl(first)}" alt="">`:"<div style=\"width:58px;height:58px\"></div>"}<div class="admin-item-main"><strong>${row.name}</strong><span>${row.price} دج</span></div><div class="admin-item-actions"><button class="admin-edit" type="button">تعديل</button><button class="admin-delete" type="button">حذف</button></div>`;item.querySelector(".admin-edit").onclick=()=>startEdit(row);item.querySelector(".admin-delete").onclick=()=>deleteProduct(row);adminList.appendChild(item);});}
+  catch(e){adminList.innerHTML=`<div class="admin-error">${e.message}</div>`;}
+}
+function startEdit(row){editId.value=row.id;productName.value=row.name||"";productColor.value=row.color||"";productDesc.value=row.description||"";productPrice.value=row.price||"";productImages.value="";showCurrentImages(row.image_paths);saveProduct.textContent="حفظ التعديل";productError.textContent="";productForm.scrollIntoView({behavior:"smooth"});}
+async function uploadImages(files){const paths=[];for(const file of files){const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"jpg");const path=(crypto.randomUUID ? crypto.randomUUID() : (Date.now()+"-"+Math.random().toString(36).slice(2)))+"."+ext;const r=await fetch(SUPABASE_URL+"/storage/v1/object/"+BUCKET+"/"+path,{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+accessToken,"Content-Type":file.type||"application/octet-stream","x-upsert":"false"},body:file});if(!r.ok)throw new Error(await r.text());paths.push(path);}return paths;}
+async function removeImages(paths){for(const path of (paths||[])){await fetch(SUPABASE_URL+"/storage/v1/object/"+BUCKET,{method:"DELETE",headers:apiHeaders(),body:JSON.stringify({prefixes:[path]})});}}
+productForm.addEventListener("submit",async e=>{e.preventDefault();productError.textContent="";saveProduct.disabled=true;saveProduct.textContent="جاري الحفظ...";try{const id=editId.value;const existing=adminRows.find(x=>x.id===id);let paths=existing?.image_paths||[];const files=[...productImages.files];if(files.length){const newPaths=await uploadImages(files);paths= id ? newPaths : newPaths;if(id&&existing?.image_paths?.length) await removeImages(existing.image_paths);}if(!id&&!paths.length)throw new Error("أضف صورة واحدة على الأقل للمنتج.");const body={name:productName.value.trim(),color:productColor.value.trim(),description:productDesc.value.trim(),price:Number(productPrice.value),image_paths:paths,active:true};let r;if(id){r=await fetch(TABLE_URL+"?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{...apiHeaders(),"Prefer":"return=minimal"},body:JSON.stringify(body)});}else{r=await fetch(TABLE_URL,{method:"POST",headers:{...apiHeaders(),"Prefer":"return=minimal"},body:JSON.stringify(body)});}if(!r.ok)throw new Error(await r.text());resetProductForm();await refreshAdminList();await loadProducts();}catch(err){productError.textContent=err.message;}finally{saveProduct.disabled=false;saveProduct.textContent=editId.value?"حفظ التعديل":"إضافة المنتج";}});
+async function deleteProduct(row){if(!confirm("هل تريد حذف هذا المنتج نهائيًا؟"))return;try{const r=await fetch(TABLE_URL+"?id=eq."+encodeURIComponent(row.id),{method:"DELETE",headers:apiHeaders()});if(!r.ok)throw new Error(await r.text());await removeImages(row.image_paths);await refreshAdminList();await loadProducts();}catch(e){alert("تعذر الحذف: "+e.message)}}
+
+render();
+loadProducts();
 </script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const forms = document.querySelectorAll('form[action*="formspree.io/f/mjyvvjpj"]');
+  const forms = document.querySelectorAll('form[action*="formspree.io/f/"]');
 
-  forms.forEach(function (form) {
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
+  forms.forEach(function (form, index) {
+    // Use a hidden iframe instead of fetch(). This also works when the HTML
+    // file is opened directly on a phone/computer, without CORS blocking.
+    const frameName = "formspree_hidden_" + index;
+    const iframe = document.createElement("iframe");
+    iframe.name = frameName;
+    iframe.style.display = "none";
+    iframe.setAttribute("aria-hidden", "true");
+    document.body.appendChild(iframe);
 
+    form.target = frameName;
+
+    form.addEventListener("submit", function () {
       const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
-      const originalText = submitButton ? submitButton.textContent : "";
 
       if (submitButton) {
         submitButton.disabled = true;
-        if (submitButton.tagName === "BUTTON") submitButton.textContent = "جاري الإرسال...";
+        if (submitButton.tagName === "BUTTON") {
+          submitButton.dataset.originalText = submitButton.textContent;
+          submitButton.textContent = "جاري الإرسال...";
+        }
       }
 
-      try {
-        const response = await fetch(form.action, {
-          method: "POST",
-          body: new FormData(form),
-          headers: { "Accept": "application/json" }
-        });
-
-        if (!response.ok) throw new Error("Submission failed");
-
+      // Let the browser submit the form normally to Formspree,
+      // but into the invisible iframe so the page never leaves the store.
+      setTimeout(function () {
         form.reset();
+
+        const modal = document.getElementById("modal");
+        if (modal) {
+          modal.classList.remove("open");
+          modal.setAttribute("aria-hidden", "true");
+        }
 
         const success = document.createElement("div");
         success.setAttribute("role", "status");
@@ -554,6 +586,7 @@ document.addEventListener("DOMContentLoaded", function () {
           background: rgba(0,0,0,.72);
           padding: 20px;
         `;
+
         success.innerHTML = `
           <div style="
             max-width: 420px;
@@ -566,30 +599,33 @@ document.addEventListener("DOMContentLoaded", function () {
             box-shadow: 0 20px 60px rgba(0,0,0,.45);
             border: 1px solid rgba(255,255,255,.12);
           ">
-            <div style="font-size: 42px; margin-bottom: 12px;">✓</div>
-            <h2 style="margin: 0 0 10px;">تم إرسال الطلبية بنجاح</h2>
-            <p style="margin: 0; opacity: .8;">شكراً لك، سنتواصل معك لتأكيد الطلب.</p>
+            <div style="font-size:42px;line-height:1;margin-bottom:14px;">✓</div>
+            <h2 style="margin:0 0 10px;">تم إرسال الطلبية بنجاح</h2>
+            <p style="margin:0;opacity:.8;">شكراً لك، سنتواصل معك لتأكيد الطلب.</p>
             <button type="button" style="
-              margin-top: 22px;
-              padding: 11px 24px;
-              border: 0;
-              border-radius: 12px;
-              cursor: pointer;
-              font-size: 15px;
+              margin-top:22px;
+              padding:11px 24px;
+              border:0;
+              border-radius:12px;
+              cursor:pointer;
+              font-size:15px;
             ">حسناً</button>
           </div>
         `;
 
-        success.querySelector("button").addEventListener("click", () => success.remove());
+        success.querySelector("button").addEventListener("click", function () {
+          success.remove();
+        });
+
         document.body.appendChild(success);
-      } catch (error) {
-        alert("تعذر إرسال الطلب. يرجى المحاولة مرة أخرى.");
-      } finally {
+
         if (submitButton) {
           submitButton.disabled = false;
-          if (submitButton.tagName === "BUTTON") submitButton.textContent = originalText;
+          if (submitButton.tagName === "BUTTON") {
+            submitButton.textContent = submitButton.dataset.originalText || "تأكيد الطلب";
+          }
         }
-      }
+      }, 1200);
     });
   });
 });
