@@ -324,7 +324,6 @@ body{
   <div class="hero-tags">
     <span>قماش خفيف</span>
     <span>4 ألوان</span>
-    <span>3000 دج</span>
     <span>توصيل 58 ولاية</span>
   </div>
 </header>
@@ -364,8 +363,8 @@ body{
     <div id="adminLoginView">
       <h2>إدارة المنتجات</h2>
       <p class="admin-muted">سجّل الدخول لإضافة وتعديل وحذف المنتجات.</p>
-      <label>البريد الإلكتروني لحساب الإدارة</label><input id="adminEmail" type="email" autocomplete="username">
-      <label>كود الدخول</label><input id="adminPassword" type="password" inputmode="numeric" autocomplete="current-password" placeholder="أدخل كود الدخول">
+      <label>البريد الإلكتروني</label><input id="adminEmail" type="email" autocomplete="username">
+      <label>كلمة المرور</label><input id="adminPassword" type="password" autocomplete="current-password">
       <button class="modal-submit" id="adminLogin" type="button">دخول</button>
       <div class="admin-error" id="adminLoginError"></div>
     </div>
@@ -511,12 +510,9 @@ adminModal.addEventListener("click",e=>{if(e.target===adminModal)adminX.click()}
 
 document.getElementById("adminLogin").addEventListener("click",async()=>{
   loginError.textContent="";
-  const email = adminEmail.value.trim();
-  const code = adminPassword.value;
-  if(!email || !code){ loginError.textContent="أدخل بيانات حساب الإدارة."; return; }
   try{
-    const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:apiHeaders(""),body:JSON.stringify({email,password:code})});
-    const d=await r.json(); if(!r.ok) throw new Error(d.error_description||d.msg||"بيانات الدخول غير صحيحة");
+    const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:apiHeaders(""),body:JSON.stringify({email:adminEmail.value.trim(),password:adminPassword.value})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error_description||d.msg||"تعذر تسجيل الدخول");
     accessToken=d.access_token; sessionStorage.setItem("aanti_admin_token",accessToken); loginView.hidden=true;panelView.hidden=false;refreshAdminList();
   }catch(e){loginError.textContent=e.message;}
 });
@@ -533,22 +529,7 @@ function startEdit(row){editId.value=row.id;productName.value=row.name||"";produ
 async function uploadImages(files){const paths=[];for(const file of files){const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"jpg");const path=(crypto.randomUUID ? crypto.randomUUID() : (Date.now()+"-"+Math.random().toString(36).slice(2)))+"."+ext;const r=await fetch(SUPABASE_URL+"/storage/v1/object/"+BUCKET+"/"+path,{method:"POST",headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+accessToken,"Content-Type":file.type||"application/octet-stream","x-upsert":"false"},body:file});if(!r.ok)throw new Error(await r.text());paths.push(path);}return paths;}
 async function removeImages(paths){for(const path of (paths||[])){await fetch(SUPABASE_URL+"/storage/v1/object/"+BUCKET,{method:"DELETE",headers:apiHeaders(),body:JSON.stringify({prefixes:[path]})});}}
 productForm.addEventListener("submit",async e=>{e.preventDefault();productError.textContent="";saveProduct.disabled=true;saveProduct.textContent="جاري الحفظ...";try{const id=editId.value;const existing=adminRows.find(x=>x.id===id);let paths=existing?.image_paths||[];const files=[...productImages.files];if(files.length){const newPaths=await uploadImages(files);paths= id ? newPaths : newPaths;if(id&&existing?.image_paths?.length) await removeImages(existing.image_paths);}if(!id&&!paths.length)throw new Error("أضف صورة واحدة على الأقل للمنتج.");const body={name:productName.value.trim(),color:productColor.value.trim(),description:productDesc.value.trim(),price:Number(productPrice.value),image_paths:paths,active:true};let r;if(id){r=await fetch(TABLE_URL+"?id=eq."+encodeURIComponent(id),{method:"PATCH",headers:{...apiHeaders(),"Prefer":"return=minimal"},body:JSON.stringify(body)});}else{r=await fetch(TABLE_URL,{method:"POST",headers:{...apiHeaders(),"Prefer":"return=minimal"},body:JSON.stringify(body)});}if(!r.ok)throw new Error(await r.text());resetProductForm();await refreshAdminList();await loadProducts();}catch(err){productError.textContent=err.message;}finally{saveProduct.disabled=false;saveProduct.textContent=editId.value?"حفظ التعديل":"إضافة المنتج";}});
-async function deleteProduct(row){
-  if(!accessToken){alert("يجب تسجيل الدخول أولًا.");return;}
-  if(!confirm(`هل تريد حذف المنتج "${row.name||""}" نهائيًا؟`))return;
-  try{
-    const r=await fetch(TABLE_URL+"?id=eq."+encodeURIComponent(row.id),{
-      method:"DELETE",
-      headers:{...apiHeaders(),"Prefer":"return=minimal"}
-    });
-    if(!r.ok)throw new Error(await r.text());
-    await removeImages(row.image_paths);
-    await refreshAdminList();
-    await loadProducts();
-  }catch(e){
-    alert("تعذر حذف المنتج: "+e.message);
-  }
-}
+async function deleteProduct(row){if(!confirm("هل تريد حذف هذا المنتج نهائيًا؟"))return;try{const r=await fetch(TABLE_URL+"?id=eq."+encodeURIComponent(row.id),{method:"DELETE",headers:apiHeaders()});if(!r.ok)throw new Error(await r.text());await removeImages(row.image_paths);await refreshAdminList();await loadProducts();}catch(e){alert("تعذر الحذف: "+e.message)}}
 
 render();
 loadProducts();
