@@ -321,11 +321,6 @@ body{
   <div class="hero-badge">تشكيلة جديدة</div>
   <h1 id="siteHeroTitle">بلوزات أنثوية</h1>
   <p id="siteHeroDescription">قماش ناعم، أكمام واسعة، وربطة أمامية — إطلالة يومية مريحة وأنيقة.</p>
-  <div class="hero-tags">
-    <span>قماش خفيف</span>
-    <span>4 ألوان</span>
-    <span>توصيل 58 ولاية</span>
-  </div>
 </header>
 
 <main class="section">
@@ -523,6 +518,9 @@ const editId=document.getElementById("editId"), productName=document.getElementB
 const siteTitle=document.getElementById("siteTitle"), siteDescription=document.getElementById("siteDescription"), saveSiteSettings=document.getElementById("saveSiteSettings"), siteSettingsError=document.getElementById("siteSettingsError");
 const siteHeroTitle=document.getElementById("siteHeroTitle"), siteHeroDescription=document.getElementById("siteHeroDescription"), siteMetaDescription=document.getElementById("siteMetaDescription");
 let adminRows=[];
+function escapeHtml(value){
+  return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
 function applySiteSettings(settings){
   const title=(settings?.color||DEFAULT_SITE_TITLE).trim()||DEFAULT_SITE_TITLE;
   const description=(settings?.description||DEFAULT_SITE_DESCRIPTION).trim()||DEFAULT_SITE_DESCRIPTION;
@@ -599,7 +597,31 @@ document.getElementById("cancelEdit").addEventListener("click",resetProductForm)
 function resetProductForm(){editId.value="";productName.value="";productColor.value="";productDesc.value="";productPrice.value="";productImages.value="";currentImages.innerHTML="";saveProduct.textContent="إضافة المنتج";productError.textContent="";}
 function showCurrentImages(paths){currentImages.innerHTML="";(paths||[]).forEach(p=>{const img=document.createElement("img");img.src=imageUrl(p);currentImages.appendChild(img)});}
 async function refreshAdminList(){
-  try{const r=await fetch(TABLE_URL+"?select=*&order=created_at.desc",{headers:apiHeaders()});if(!r.ok)throw new Error(await r.text());adminRows=await r.json();adminList.innerHTML="";const productRows=adminRows.filter(row=>row.name!==SITE_SETTINGS_MARKER);document.getElementById("adminCount").textContent=productRows.length+" منتج";productRows.forEach(row=>{const item=document.createElement("div");item.className="admin-item";const first=(row.image_paths||[])[0];const price=Number(row.price||0).toLocaleString("ar-DZ");item.innerHTML=`${first?`<img src="${imageUrl(first)}" alt="">`:"<div class="admin-thumb-empty"></div>"}<div class="admin-item-main"><strong>${row.name||"منتج بدون اسم"}</strong><span>${price} دج</span></div><div class="admin-item-actions"><button class="admin-edit" type="button">تعديل المنتج</button><button class="admin-delete" type="button">حذف</button></div>`;item.querySelector(".admin-edit").onclick=()=>startEdit(row);item.querySelector(".admin-delete").onclick=()=>deleteProduct(row);adminList.appendChild(item);});}
+  try{
+    const r=await fetch(TABLE_URL+"?select=*&order=created_at.desc",{headers:apiHeaders()});
+    if(!r.ok) throw new Error(await r.text());
+    adminRows=await r.json();
+    adminList.innerHTML="";
+    const productRows=adminRows.filter(row=>row.name!==SITE_SETTINGS_MARKER);
+    document.getElementById("adminCount").textContent=productRows.length+" منتج";
+    productRows.forEach(row=>{
+      const item=document.createElement("div");
+      item.className="admin-item";
+      const first=(row.image_paths||[])[0];
+      const imageHtml=first
+        ? '<img src="'+imageUrl(first)+'" alt="">'
+        : '<div class="admin-thumb-empty"></div>';
+      const price=Number(row.price||0).toLocaleString("ar-DZ");
+      item.innerHTML=imageHtml+
+        '<div class="admin-item-main"><strong>'+escapeHtml(row.name||"منتج بدون اسم")+
+        '</strong><span>'+price+' دج</span></div>'+
+        '<div class="admin-item-actions"><button class="admin-edit" type="button">تعديل المنتج</button>'+
+        '<button class="admin-delete" type="button">حذف</button></div>';
+      item.querySelector(".admin-edit").onclick=()=>startEdit(row);
+      item.querySelector(".admin-delete").onclick=()=>deleteProduct(row);
+      adminList.appendChild(item);
+    });
+  }
   catch(e){adminList.innerHTML=`<div class="admin-error">${e.message}</div>`;}
 }
 function startEdit(row){editId.value=row.id;productName.value=row.name||"";productColor.value=row.color||"";productDesc.value=row.description||"";productPrice.value=row.price||"";productImages.value="";showCurrentImages(row.image_paths);saveProduct.textContent="حفظ التعديل";productError.textContent="";productForm.scrollIntoView({behavior:"smooth"});}
@@ -609,6 +631,7 @@ productForm.addEventListener("submit",async e=>{e.preventDefault();productError.
 loadProducts();}catch(err){productError.textContent=err.message;}finally{saveProduct.disabled=false;saveProduct.textContent=editId.value?"حفظ التعديل":"إضافة المنتج";}});
 async function deleteProduct(row){if(!confirm("هل تريد حذف هذا المنتج نهائيًا؟"))return;try{const r=await fetch(TABLE_URL+"?id=eq."+encodeURIComponent(row.id),{method:"DELETE",headers:apiHeaders()});if(!r.ok)throw new Error(await r.text());await removeImages(row.image_paths);await refreshAdminList();await loadProducts();}catch(e){alert("تعذر الحذف: "+e.message)}}
 
+loadSiteSettings();
 render();
 loadProducts();
 </script>
