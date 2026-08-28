@@ -511,18 +511,12 @@ adminModal.addEventListener("click",e=>{if(e.target===adminModal)adminX.click()}
 
 document.getElementById("adminLogin").addEventListener("click",async()=>{
   loginError.textContent="";
-  const code = adminPassword.value.trim();
-  if(code !== "0606070708"){
-    loginError.textContent="كود الدخول غير صحيح.";
-    return;
-  }
-  if(!adminEmail.value.trim()){
-    loginError.textContent="أدخل البريد الإلكتروني لحساب الإدارة.";
-    return;
-  }
+  const email = adminEmail.value.trim();
+  const code = adminPassword.value;
+  if(!email || !code){ loginError.textContent="أدخل بيانات حساب الإدارة."; return; }
   try{
-    const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:apiHeaders(""),body:JSON.stringify({email:adminEmail.value.trim(),password:code})});
-    const d=await r.json(); if(!r.ok) throw new Error(d.error_description||d.msg||"تعذر تسجيل الدخول");
+    const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:apiHeaders(""),body:JSON.stringify({email,password:code})});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error_description||d.msg||"بيانات الدخول غير صحيحة");
     accessToken=d.access_token; sessionStorage.setItem("aanti_admin_token",accessToken); loginView.hidden=true;panelView.hidden=false;refreshAdminList();
   }catch(e){loginError.textContent=e.message;}
 });
