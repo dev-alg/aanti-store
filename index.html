@@ -339,7 +339,7 @@ body{
     <button class="modal-x" id="modalX" type="button" aria-label="إغلاق">×</button>
     <h2>إتمام الطلب</h2>
     <div class="sel" id="selName">—</div>
-    <form action="https://formspree.io/f/mjyvvjpj" method="POST">
+    <form action="https://formspree.io/f/xljeeavy" method="POST">
       <input type="hidden" name="المنتج" id="selInput">
       <input type="hidden" name="السعر" value="3000 دج">
       <label for="n">الاسم</label>
@@ -514,5 +514,86 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && modal.classList.contains("open")) modalX.click();
 });
 </script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const forms = document.querySelectorAll('form[action*="formspree.io/f/mjyvvjpj"]');
+
+  forms.forEach(function (form) {
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+      const originalText = submitButton ? submitButton.textContent : "";
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        if (submitButton.tagName === "BUTTON") submitButton.textContent = "جاري الإرسال...";
+      }
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          body: new FormData(form),
+          headers: { "Accept": "application/json" }
+        });
+
+        if (!response.ok) throw new Error("Submission failed");
+
+        form.reset();
+
+        const success = document.createElement("div");
+        success.setAttribute("role", "status");
+        success.style.cssText = `
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0,0,0,.72);
+          padding: 20px;
+        `;
+        success.innerHTML = `
+          <div style="
+            max-width: 420px;
+            width: 100%;
+            padding: 30px 24px;
+            border-radius: 20px;
+            text-align: center;
+            background: #111;
+            color: #fff;
+            box-shadow: 0 20px 60px rgba(0,0,0,.45);
+            border: 1px solid rgba(255,255,255,.12);
+          ">
+            <div style="font-size: 42px; margin-bottom: 12px;">✓</div>
+            <h2 style="margin: 0 0 10px;">تم إرسال الطلبية بنجاح</h2>
+            <p style="margin: 0; opacity: .8;">شكراً لك، سنتواصل معك لتأكيد الطلب.</p>
+            <button type="button" style="
+              margin-top: 22px;
+              padding: 11px 24px;
+              border: 0;
+              border-radius: 12px;
+              cursor: pointer;
+              font-size: 15px;
+            ">حسناً</button>
+          </div>
+        `;
+
+        success.querySelector("button").addEventListener("click", () => success.remove());
+        document.body.appendChild(success);
+      } catch (error) {
+        alert("تعذر إرسال الطلب. يرجى المحاولة مرة أخرى.");
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          if (submitButton.tagName === "BUTTON") submitButton.textContent = originalText;
+        }
+      }
+    });
+  });
+});
+</script>
+
 </body>
 </html>
